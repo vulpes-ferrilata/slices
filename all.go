@@ -1,8 +1,8 @@
 package slices
 
-func All[T comparable](predicate predicateFunc[T], elements ...T) (bool, error) {
+func All[T comparable](f PredicateFunc[T], elements ...T) (bool, error) {
 	for _, element := range elements {
-		isMatch, err := predicate(element)
+		isMatch, err := f(element)
 		if err != nil {
 			return false, err
 		}

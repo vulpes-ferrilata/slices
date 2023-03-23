@@ -11,33 +11,45 @@ import (
 )
 
 var _ = Describe("Map", func() {
-	var Err = errors.New("error")
+	Err := errors.New("error")
 
-	When("slice of integer from 1 to 5", func() {
-		slice := []int{1, 2, 3, 4, 5}
-
-		Context("with mapper function return string", func() {
-			results, err := slices.Map(func(object int) (string, error) {
-				return fmt.Sprint(object), nil
-			}, slice...)
-
-			It(`must return a slice contains "1", "2", "3", "4", "5"`, func() {
-				Expect(results).Should(ContainElements("1", "2", "3", "4", "5"))
-			})
-
-			It("has no error", func() {
+	DescribeTable("when slice of integer and mapper return string",
+		func(slice []int, f slices.MapperFunc[int, string], expectedResults []string, expectedErr error) {
+			results, err := slices.Map(f, slice...)
+			if expectedErr == nil {
 				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
+			} else {
+				Expect(err).Should(MatchError(err))
+			}
+			Expect(results).Should(HaveExactElements(expectedResults))
 
-		Context("with mapper function return error", func() {
-			_, err := slices.Map(func(object int) (string, error) {
+		},
+		Entry(
+			"when mapper function return static result",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (string, error) {
+				return "a", nil
+			},
+			[]string{"a", "a", "a", "a", "a"},
+			nil,
+		),
+		Entry(
+			"when mapper function return dynamic result which convert from argument",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (string, error) {
+				return fmt.Sprint(object), nil
+			},
+			[]string{"2", "3", "4", "5", "6"},
+			nil,
+		),
+		Entry(
+			"when predicate function return error",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (string, error) {
 				return "", Err
-			}, slice...)
-
-			It("must return error", func() {
-				Expect(err).Should(MatchError(Err))
-			})
-		})
-	})
+			},
+			[]string{},
+			Err,
+		),
+	)
 })

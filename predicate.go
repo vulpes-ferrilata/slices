@@ -1,3 +1,3 @@
 package slices
 
-type predicateFunc[T comparable] func(object T) (bool, error)
+type PredicateFunc[T comparable] func(object T) (bool, error)

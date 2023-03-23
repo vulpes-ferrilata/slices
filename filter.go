@@ -1,10 +1,10 @@
 package slices
 
-func Filter[T comparable](predicate predicateFunc[T], elements ...T) ([]T, error) {
+func Filter[T comparable](f PredicateFunc[T], elements ...T) ([]T, error) {
 	newSlice := make([]T, 0)
 
 	for _, element := range elements {
-		isMatch, err := predicate(element)
+		isMatch, err := f(element)
 		if err != nil {
 			return newSlice, err
 		}

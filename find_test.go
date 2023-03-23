@@ -10,91 +10,63 @@ import (
 )
 
 var _ = Describe("Find", func() {
-	var Err = errors.New("error")
+	Err := errors.New("error")
 
-	When("slice of integer from 1 to 5", func() {
-		slice := []int{1, 2, 3, 4, 5}
+	DescribeTable("when slice of integer",
+		func(slice []int, f slices.PredicateFunc[int], expectedResult int, expectedErr error) {
+			result, err := slices.Find(f, slice...)
+			if expectedErr == nil {
+				Expect(err).ShouldNot(HaveOccurred())
+			} else {
+				Expect(err).Should(MatchError(err))
+			}
+			Expect(result).Should(BeEquivalentTo(expectedResult))
 
-		Context("with predicate function matches anything", func() {
-			result, err := slices.Find(func(object int) (bool, error) {
+		},
+		Entry(
+			"when predicate function return true",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
 				return true, nil
-			}, slice...)
-
-			It("must return 1", func() {
-				Expect(result).Should(Equal(1))
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matchs 1", func() {
-			result, err := slices.Find(func(object int) (bool, error) {
-				return object == 1, nil
-			}, slice...)
-
-			It("must return 1", func() {
-				Expect(result).Should(Equal(1))
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matchs 5", func() {
-			result, err := slices.Find(func(object int) (bool, error) {
-				return object == 5, nil
-			}, slice...)
-
-			It("must return 5", func() {
-				Expect(result).Should(Equal(5))
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matchs nothing", func() {
-			_, err := slices.Find(func(object int) (bool, error) {
+			},
+			2,
+			nil,
+		),
+		Entry(
+			"when predicate function return false",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
 				return false, nil
-			}, slice...)
-
-			It("must return error 'no match found'", func() {
-				Expect(err).Should(MatchError(slices.ErrNoMatchFound))
-			})
-		})
-
-		Context("with predicate function matchs 6", func() {
-			_, err := slices.Find(func(object int) (bool, error) {
-				return object == 6, nil
-			}, slice...)
-
-			It("must return error 'no match found'", func() {
-				Expect(err).Should(MatchError(slices.ErrNoMatchFound))
-			})
-		})
-
-		Context("with predicate function matches 0", func() {
-			_, err := slices.Find(func(object int) (bool, error) {
-				return object == 0, nil
-			}, slice...)
-
-			It("must return error 'no match found'", func() {
-				Expect(err).Should(MatchError(slices.ErrNoMatchFound))
-			})
-		})
-
-		Context("with predicate function return error", func() {
-			_, err := slices.Find(func(object int) (bool, error) {
+			},
+			0,
+			slices.ErrNoMatchFound,
+		),
+		Entry(
+			"when predicate function match value in slice",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
+				return object == 3, nil
+			},
+			3,
+			nil,
+		),
+		Entry(
+			"when predicate function match some values in slice",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
+				return object > 3, nil
+			},
+			4,
+			nil,
+		),
+		Entry(
+			"when predicate function return error",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
 				return true, Err
-			}, slice...)
-
-			It("must return error", func() {
-				Expect(err).Should(MatchError(Err))
-			})
-		})
-	})
+			},
+			0,
+			Err,
+		),
+	)
 })

@@ -10,103 +10,63 @@ import (
 )
 
 var _ = Describe("Filter", func() {
-	var Err = errors.New("error")
+	Err := errors.New("error")
 
-	When("slice of integer from 1 to 5", func() {
-		slice := []int{1, 2, 3, 4, 5}
+	DescribeTable("when slice of integer",
+		func(slice []int, f slices.PredicateFunc[int], expectedResults []int, expectedErr error) {
+			results, err := slices.Filter(f, slice...)
+			if expectedErr == nil {
+				Expect(err).ShouldNot(HaveOccurred())
+			} else {
+				Expect(err).Should(MatchError(err))
+			}
+			Expect(results).Should(HaveExactElements(expectedResults))
 
-		Context("with predicate function matches everything", func() {
-			results, err := slices.Filter(func(object int) (bool, error) {
+		},
+		Entry(
+			"when predicate function return true",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
 				return true, nil
-			}, slice...)
-
-			It("must return a slice contains 1, 2, 3, 4, 5", func() {
-				Expect(results).Should(ContainElements(1, 2, 3, 4, 5))
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matchs every elements except 1", func() {
-			results, err := slices.Filter(func(object int) (bool, error) {
-				return object != 1, nil
-			}, slice...)
-
-			It("must return a slice contains 2, 3, 4, 5", func() {
-				Expect(results).Should(ContainElements(2, 3, 4, 5))
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matchs every elements except 5", func() {
-			results, err := slices.Filter(func(object int) (bool, error) {
-				return object != 5, nil
-			}, slice...)
-
-			It("must return a slice containes 1, 2, 3, 4", func() {
-				Expect(results).Should(ContainElements(1, 2, 3, 4))
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matchs nothing", func() {
-			results, err := slices.Filter(func(object int) (bool, error) {
+			},
+			[]int{2, 3, 4, 5, 6},
+			nil,
+		),
+		Entry(
+			"when predicate function return false",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
 				return false, nil
-			}, slice...)
-
-			It("must return empty result", func() {
-				Expect(results).Should(BeEmpty())
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matchs 6", func() {
-			results, err := slices.Filter(func(object int) (bool, error) {
-				return object == 6, nil
-			}, slice...)
-
-			It("must return empty result", func() {
-				Expect(results).Should(BeEmpty())
-			})
-
-			It("has no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function matches 0", func() {
-			results, err := slices.Filter(func(object int) (bool, error) {
-				return object == 0, nil
-			}, slice...)
-
-			It("must return empty result", func() {
-				Expect(results).Should(BeEmpty())
-			})
-
-			It("no error", func() {
-				Expect(err).ShouldNot(HaveOccurred())
-			})
-		})
-
-		Context("with predicate function return error", func() {
-			_, err := slices.Filter(func(object int) (bool, error) {
+			},
+			[]int{},
+			nil,
+		),
+		Entry(
+			"when predicate function match value in slice",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
+				return object == 2, nil
+			},
+			[]int{2},
+			nil,
+		),
+		Entry(
+			"when predicate function match some values in slice",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
+				return object > 3, nil
+			},
+			[]int{4, 5, 6},
+			nil,
+		),
+		Entry(
+			"when predicate function return error",
+			[]int{2, 3, 4, 5, 6},
+			func(object int) (bool, error) {
 				return true, Err
-			}, slice...)
-
-			It("must return error", func() {
-				Expect(err).Should(MatchError(Err))
-			})
-		})
-	})
+			},
+			[]int{},
+			Err,
+		),
+	)
 })
